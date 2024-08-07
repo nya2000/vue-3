@@ -14,7 +14,6 @@
         </select>
         <button @click="addProductToBasket" class="border-[1px] p-1">Add</button>
       </div>
-      <button>Remove</button>
     </li>
   </template>
   
