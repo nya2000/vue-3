@@ -6,6 +6,13 @@
       ></template>
     </Header>
 
+    <CategoryFilter
+      v-if="productsCategories"
+      :categories="productsCategories"
+      @onChange="filterProducts"
+    />
+    <ProductList :products="filteredProducts || mockProducts" />
+
     <Modal :isOpen="isOpenModal" :closeModal="closeModal">
       <template #default>
         <ul class="flex items-start gap-[10px] flex-wrap">
@@ -21,14 +28,13 @@
         <span v-else>Basket is empty</span>
       </template>
     </Modal>
-
-    <ProductList :products="mockProducts" />
   </div>
 </template>
 
 <script setup>
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import CategoryFilter from './components/CategoryFilter.vue';
 import Header from './components/Header/Header.vue';
 import Modal from './components/Modal/Modal.vue';
 import BasketProductItem from './components/ProductList/ProductItem/BasketProductItem.vue';
@@ -36,6 +42,8 @@ import ProductList from './components/ProductList/ProductList.vue';
 import { useBasketStore } from './store/basket';
 
 const mockProducts = ref([]);
+const productsCategories = ref(null);
+const filteredProducts = ref(null);
 
 const isOpenModal = ref(false);
 
@@ -47,6 +55,30 @@ onMounted(() => {
   fetchProducts();
 });
 
+watch(mockProducts, (newVal) => {
+  if (newVal) {
+    productsCategories.value = getProductsCategories(newVal);
+  }
+});
+
+function filterProducts(selectedFilters) {
+  const emptyFilterOptions = !selectedFilters.length;
+  if (emptyFilterOptions) {
+    filteredProducts.value = null;
+  } else {
+    const filtered = mockProducts.value.filter((product) =>
+      selectedFilters.includes(product.category)
+    );
+    filteredProducts.value = filtered;
+  }
+}
+
+function getProductsCategories(products) {
+  const productsCategories = products.map((product) => product.category);
+  const uniqueCategories = [...new Set(productsCategories)];
+  return uniqueCategories;
+}
+
 async function fetchProducts() {
   const mockApi = 'https://dummyjson.com/products?limit=50';
 
@@ -56,13 +88,11 @@ async function fetchProducts() {
   mockProducts.value = data.products;
 }
 
-const onBadgeClick = () => {
+function onBadgeClick() {
   isOpenModal.value = true;
-};
+}
 
 function closeModal() {
   isOpenModal.value = false;
 }
 </script>
-
-<style></style>
